@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Personal Finance Advisor{% endblock %}
+
+{% block content %}
+<!-- Hidden metadata element for chart fetching -->
+<div id="dashboard-meta" data-month="{{ selected_month }}" data-year="{{ selected_year }}"></div>
+
+<!-- Dashboard Header & Month/Year Selector -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">Financial Dashboard</h2>
+        <p class="text-muted small mb-0">
+            Overview for <strong>{{ selected_month | month_name }} {{ selected_year }}</strong> &bull;
+            Persona: <span class="badge bg-primary text-white">{{ current_user.user_type }}</span>
+        </p>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="GET" action="{{ url_for('dashboard.dashboard') }}" class="d-flex align-items-center gap-2">
+        <select name="month" class="form-select form-select-sm">
+            {% for m in range(1, 13) %}
+            <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>
+                {{ m | month_name }}
+            </option>
+            {% endfor %}
+        </select>
+        <select name="year" class="form-select form-select-sm">
+            {% for y in available_years %}
+            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+                {{ y }}
+            </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-outline-primary btn-sm px-3">
+            <i class="bi bi-filter"></i> Apply
+        </button>
+    </form>
+</div>
+
+<!-- Key Stat Cards (Row 1) -->
+<div class="row g-3 mb-4">
+    <!-- Income Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card stat-income h-100 p-3 shadow-sm">
+            <div class="stat-label">Total Income</div>
+            <div class="stat-value text-success">{{ summary.income | currency }}</div>
+            <div class="small text-muted d-flex align-items-center justify-content-between">
+                <span>Recorded this month</span>
+                <a href="{{ url_for('income.index', month=selected_month, year=selected_year) }}" class="text-decoration-none">View &rarr;</a>
+            </div>
+            <i class="bi bi-cash-stack stat-icon text-success"></i>
+        </div>
+    </div>
+
+    <!-- Expenses Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card stat-expense h-100 p-3 shadow-sm">
+            <div class="stat-label">Total Expenses</div>
+            <div class="stat-value text-danger">{{ summary.expenses | currency }}</div>
+            <div class="small text-muted d-flex align-items-center justify-content-between">
+                <span>Outflows this month</span>
+                <a href="{{ url_for('expenses.index', month=selected_month, year=selected_year) }}" class="text-decoration-none">View &rarr;</a>
+            </div>
+            <i class="bi bi-credit-card stat-icon text-danger"></i>
+        </div>
+    </div>
+
+    <!-- Net Savings Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card stat-savings h-100 p-3 shadow-sm">
+            <div class="stat-label">Net Savings</div>
+            <div class="stat-value {% if summary.savings >= 0 %}text-primary{% else %}text-danger{% endif %}">
+                {{ summary.savings | currency }}
+            </div>
+            <div class="small text-muted d-flex align-items-center justify-content-between">
+                <span>Savings Rate: <strong class="{% if summary.savings_rate >= 20 %}text-success{% else %}text-warning{% endif %}">{{ summary.savings_rate }}%</strong></span>
+                <span class="badge bg-light text-dark">Target: 20%</span>
+            </div>
+            <i class="bi bi-piggy-bank stat-icon text-primary"></i>
+        </div>
+    </div>
+
+    <!-- Budget Card -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card stat-budget h-100 p-3 shadow-sm">
+            <div class="stat-label">Remaining Budget</div>
+            <div class="stat-value {% if summary.remaining_budget >= 0 %}text-dark{% else %}text-danger{% endif %}">
+                {{ summary.remaining_budget | currency }}
+            </div>
+            <div class="small text-muted d-flex align-items-center justify-content-between">
+                <span>Utilization: <strong>{{ summary.budget_utilization }}%</strong></span>
+                <a href="{{ url_for('budgets.index', month=selected_month, year=selected_year) }}" class="text-decoration-none">Manage &rarr;</a>
+            </div>
+            <i class="bi bi-pie-chart stat-icon text-warning"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Metrics Quick Strip -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3 shadow-sm bg-white border-0">
+            <small class="text-muted text-uppercase fw-semibold d-block">Top Spending Category</small>
+            <div class="d-flex align-items-center justify-content-between mt-1">
+                <span class="fw-bold fs-6 text-dark">{{ summary.top_category_name }}</span>
+                <span class="badge bg-danger-subtle text-danger">{{ summary.top_category_amount | currency }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 shadow-sm bg-white border-0">
+            <small class="text-muted text-uppercase fw-semibold d-block">Over-Budget Alerts</small>
+            <div class="d-flex align-items-center justify-content-between mt-1">
+                <span class="fw-bold fs-6 text-dark">
+                    {% if summary.over_budget_count > 0 %}
+                        <span class="text-danger">{{ summary.over_budget_count }} Categories</span>
+                    {% else %}
+                        <span class="text-success">0 Over Budget</span>
+                    {% endif %}
+                </span>
+                <span class="badge {% if summary.over_budget_count > 0 %}bg-danger{% else %}bg-success{% endif %} text-white">
+                    {{ summary.over_budget_count }}
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 shadow-sm bg-white border-0">
+            <small class="text-muted text-uppercase fw-semibold d-block">Budget Adherence</small>
+            <div class="d-flex align-items-center justify-content-between mt-1">
+                <span class="fw-bold fs-6 text-dark">{{ summary.health.budget_adherence }}%</span>
+                <span class="badge bg-{{ summary.health.adherence_badge }}">{{ summary.health.adherence_status }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 shadow-sm bg-white border-0">
+            <small class="text-muted text-uppercase fw-semibold d-block">Emergency Reserve</small>
+            <div class="d-flex align-items-center justify-content-between mt-1">
+                <span class="fw-bold fs-6 text-dark text-truncate me-1" style="max-width: 140px;">{{ summary.health.emergency_fund_name }}</span>
+                <span class="badge bg-info text-dark">{{ summary.health.emergency_fund_progress }}%</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Visualizations (2x2 Grid) -->
+<div class="row g-4 mb-4">
+    <!-- Chart 1: Income vs Expenses -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Income vs Expenses vs Savings</span>
+                <small class="text-muted">{{ selected_month | month_name }} {{ selected_year }}</small>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="incomeVsExpenseChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 2: Expense by Category -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark"><i class="bi bi-pie-chart-fill text-success me-2"></i>Expense Breakdown by Category</span>
+                <small class="text-muted">{{ selected_month | month_name }} {{ selected_year }}</small>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 3: Monthly Savings Trend -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark"><i class="bi bi-graph-up text-info me-2"></i>6-Month Cash Flow &amp; Savings Trend</span>
+                <small class="text-muted">Recent Months</small>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 4: Budget vs Actual Spending -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark"><i class="bi bi-bar-chart-steps text-warning me-2"></i>Budget vs Actual by Category</span>
+                <small class="text-muted">{{ selected_month | month_name }} {{ selected_year }}</small>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="budgetVsActualChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Savings Goals & Financial Health Overview -->
+<div class="row g-4">
+    <!-- Active Savings Goals -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark"><i class="bi bi-bullseye text-primary me-2"></i>Active Savings Goals</span>
+                <a href="{{ url_for('savings.index') }}" class="btn btn-outline-primary btn-sm">All Goals</a>
+            </div>
+            <div class="card-body">
+                {% if summary.active_goals %}
+                    {% for goal in summary.active_goals %}
+                    <div class="mb-3 pb-3 {% if not loop.last %}border-bottom{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-dark">{{ goal.name }}</span>
+                            <span class="small fw-semibold text-muted">
+                                {{ goal.current_amount | currency }} of {{ goal.target_amount | currency }} ({{ goal.progress_pct }}%)
+                            </span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar {% if goal.progress_pct >= 100 %}bg-success{% elif goal.progress_pct >= 50 %}bg-primary{% else %}bg-warning{% endif %}"
+                                 role="progressbar" style="width: {{ goal.progress_pct }}%;"
+                                 aria-valuenow="{{ goal.progress_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-1 small text-muted">
+                            <span>Target Date: {{ goal.target_date }}</span>
+                            <span>Remaining: <strong class="text-dark">{{ goal.remaining_amount | currency }}</strong></span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-piggy-bank fs-1 text-muted opacity-50 d-block mb-2"></i>
+                        <p class="mb-2">No active savings goals configured yet.</p>
+                        <a href="{{ url_for('savings.index') }}" class="btn btn-sm btn-primary">Create Your First Goal</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Health Overview Indicators -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark"><i class="bi bi-heart-pulse text-danger me-2"></i>Personal Financial Health Overview</span>
+                <span class="badge bg-secondary-subtle text-secondary small">Educational Indicator</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Component</th>
+                                <th>Status</th>
+                                <th>Reason / Explanation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <strong>Savings Rate</strong>
+                                    <small class="text-muted d-block">{{ summary.health.savings_rate }}% of income</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ summary.health.savings_badge }}">
+                                        {{ summary.health.savings_status }}
+                                    </span>
+                                </td>
+                                <td class="small text-muted">{{ summary.health.savings_explanation }}</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Budget Adherence</strong>
+                                    <small class="text-muted d-block">{{ summary.health.budget_adherence }}% on track</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ summary.health.adherence_badge }}">
+                                        {{ summary.health.adherence_status }}
+                                    </span>
+                                </td>
+                                <td class="small text-muted">{{ summary.health.adherence_explanation }}</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Expense Management</strong>
+                                    <small class="text-muted d-block">{{ summary.health.expense_ratio }}% burden</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ summary.health.ratio_badge }}">
+                                        {{ summary.health.ratio_status }}
+                                    </span>
+                                </td>
+                                <td class="small text-muted">{{ summary.health.ratio_explanation }}</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Goal Progress</strong>
+                                    <small class="text-muted d-block">{{ summary.health.emergency_fund_progress }}% funded</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ summary.health.goal_badge }}">
+                                        {{ summary.health.goal_status }}
+                                    </span>
+                                </td>
+                                <td class="small text-muted">{{ summary.health.goal_explanation }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-light text-muted small">
+                <i class="bi bi-info-circle me-1"></i> Transparent educational indicator based on measurable financial factors, not an official credit score.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

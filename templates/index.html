@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}Personal Finance Advisor Bot — AI-Powered Smart Budgeting{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+
+    <!-- Header Section with Brand Logo & Tagline -->
+    <header class="advisor-hero-header text-center text-lg-start mb-4">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-inline-flex align-items-center gap-2 brand-tagline px-3 py-1 rounded-pill bg-white bg-opacity-10 mb-3 border border-white border-opacity-20">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>AI-Powered Financial Planning Assistant</span>
+                </div>
+                <h1 class="display-5 fw-bold mb-2">
+                    Personal Finance Advisor Bot
+                </h1>
+                <p class="lead mb-3 text-light opacity-90">
+                    Take control of your personal finances with clarity and confidence. Get automated budget plans, intelligent spending insights, and structured savings recommendations powered by Python arithmetic and Google Gemini AI.
+                </p>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="badge bg-light text-dark px-3 py-2 rounded-pill fw-semibold">
+                        <i class="fa-solid fa-bolt text-warning me-1"></i> Gemini 2.0 Flash
+                    </span>
+                    <span class="badge bg-light text-dark px-3 py-2 rounded-pill fw-semibold">
+                        <i class="fa-solid fa-shield-halved text-success me-1"></i> Secure API Key Management
+                    </span>
+                    <span class="badge bg-light text-dark px-3 py-2 rounded-pill fw-semibold">
+                        <i class="fa-solid fa-indian-rupee-sign text-primary me-1"></i> INR (₹) Engine
+                    </span>
+                </div>
+            </div>
+            <div class="col-lg-4 mt-4 mt-lg-0 text-lg-end text-center">
+                {% if current_user.is_authenticated %}
+                <div class="p-3 rounded-4 bg-white bg-opacity-10 border border-white border-opacity-20 text-start">
+                    <div class="small text-light opacity-75 mb-1">Signed In As:</div>
+                    <div class="fw-bold text-white fs-6 mb-2">{{ current_user.name }} ({{ current_user.user_type }})</div>
+                    <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-light btn-sm fw-bold w-100">
+                        <i class="fa-solid fa-gauge-high me-1"></i> Open Full Dashboard
+                    </a>
+                </div>
+                {% else %}
+                <div class="p-3 rounded-4 bg-white bg-opacity-10 border border-white border-opacity-20 text-start">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="small text-light opacity-75">Full-Stack Portal</span>
+                        <span class="badge bg-warning text-dark">Demo Available</span>
+                    </div>
+                    <p class="small text-light opacity-90 mb-3">
+                        Want multi-month tracking, SQLite records, and downloadable reports?
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-light btn-sm fw-bold">
+                            <i class="fa-solid fa-right-to-bracket me-1"></i> Sign In to Portal
+                        </a>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fa-solid fa-user-plus me-1"></i> Create Free Account
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Quick Scenario Presets for Fast Evaluation / Live Viva -->
+    <div class="glass-card p-3 mb-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles text-primary"></i>
+                <span class="fw-bold small text-uppercase text-secondary">Quick Demo Fill (Supported Scenarios):</span>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="scenario-preset-btn" data-scenario="salaried" title="Scenario 1: Fixed salary, rent, food, transport">
+                    <i class="fa-solid fa-briefcase text-primary me-1"></i> Salaried Pro (₹50k)
+                </button>
+                <button type="button" class="scenario-preset-btn" data-scenario="student" title="Scenario 2: Limited allowance, discretionary check">
+                    <i class="fa-solid fa-graduation-cap text-success me-1"></i> College Student (₹12k)
+                </button>
+                <button type="button" class="scenario-preset-btn" data-scenario="freelancer" title="Scenario 3: Variable income, emergency runway">
+                    <i class="fa-solid fa-laptop-code text-info me-1"></i> Freelancer (₹65k)
+                </button>
+                <button type="button" class="scenario-preset-btn" data-scenario="household" title="Scenario 4: Shared family expenses, groceries, utilities">
+                    <i class="fa-solid fa-people-roof text-warning me-1"></i> Household (₹85k)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Input Section Form -->
+    <div class="card shadow-sm border-0 mb-4 rounded-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold text-dark mb-1">
+                <i class="fa-solid fa-sliders text-primary me-2"></i>Enter Your Financial Details
+            </h4>
+            <p class="text-muted small mb-4">
+                Submit your monthly income, category expenses, and primary target. Our AI advisor will analyze your cash flow against financial health thresholds.
+            </p>
+
+            <form id="financeForm" novalidate>
+                <div class="row g-4 mb-4">
+                    <!-- Monthly Income Input -->
+                    <div class="col-md-6">
+                        <label for="monthlyIncome" class="form-label fw-semibold text-dark">
+                            Monthly Income (Net In-Hand) <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group input-group-lg shadow-sm">
+                            <span class="input-group-text bg-light fw-bold text-success">₹</span>
+                            <input type="number" class="form-control" id="monthlyIncome" placeholder="e.g. 50000" min="1" step="100" required>
+                        </div>
+                        <div class="form-text">Your primary take-home earnings or monthly student allowance.</div>
+                    </div>
+
+                    <!-- Financial Goal Input -->
+                    <div class="col-md-6">
+                        <label for="financialGoal" class="form-label fw-semibold text-dark">
+                            Primary Financial Goal <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group input-group-lg shadow-sm">
+                            <span class="input-group-text bg-light text-primary">
+                                <i class="fa-solid fa-bullseye"></i>
+                            </span>
+                            <select class="form-select" id="financialGoal" required>
+                                <option value="emergency_fund" selected>Emergency Fund (3-6 Months Cushion)</option>
+                                <option value="vacation">Vacation &amp; Travel</option>
+                                <option value="gadget_purchase">Tech Gadget / Laptop Purchase</option>
+                                <option value="investment">Long-Term Investment &amp; Wealth</option>
+                                <option value="debt_payoff">Debt / Loan Repayment</option>
+                                <option value="general_savings">General Savings &amp; Buffer</option>
+                            </select>
+                        </div>
+                        <div class="form-text">The advisor tailors specific rupee saving suggestions for this goal.</div>
+                    </div>
+                </div>
+
+                <!-- Monthly Category Expenses Input Grid -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                        <h6 class="fw-bold mb-0 text-dark">
+                            <i class="fa-solid fa-receipt text-secondary me-2"></i>Monthly Expenses by Category
+                        </h6>
+                        <small class="text-muted">Enter approximate monthly spending (leave blank or 0 if none)</small>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label small fw-semibold text-muted mb-1">
+                                <i class="fa-solid fa-house text-primary me-1"></i> Rent / Housing
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control expense-category-input" id="expense_rent" placeholder="0" min="0" step="100">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label small fw-semibold text-muted mb-1">
+                                <i class="fa-solid fa-utensils text-warning me-1"></i> Food &amp; Dining
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control expense-category-input" id="expense_food" placeholder="0" min="0" step="100">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label small fw-semibold text-muted mb-1">
+                                <i class="fa-solid fa-car-side text-info me-1"></i> Transportation
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control expense-category-input" id="expense_transport" placeholder="0" min="0" step="100">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label small fw-semibold text-muted mb-1">
+                                <i class="fa-solid fa-film text-danger me-1"></i> Entertainment
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control expense-category-input" id="expense_entertainment" placeholder="0" min="0" step="100">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label small fw-semibold text-muted mb-1">
+                                <i class="fa-solid fa-bolt text-warning me-1"></i> Utilities &amp; Bills
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control expense-category-input" id="expense_utilities" placeholder="0" min="0" step="100">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label small fw-semibold text-muted mb-1">
+                                <i class="fa-solid fa-heart-pulse text-danger me-1"></i> Healthcare
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control expense-category-input" id="expense_healthcare" placeholder="0" min="0" step="100">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label small fw-semibold text-muted mb-1">
+                                <i class="fa-solid fa-bag-shopping text-primary me-1"></i> Shopping
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control expense-category-input" id="expense_shopping" placeholder="0" min="0" step="100">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label small fw-semibold text-muted mb-1">
+                                <i class="fa-solid fa-coins text-secondary me-1"></i> Other / Misc
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control expense-category-input" id="expense_other" placeholder="0" min="0" step="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Additional Categories Container -->
+                    <div id="dynamicExpensesContainer" class="mt-3"></div>
+
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="addExpenseRowBtn">
+                            <i class="fa-solid fa-plus me-1"></i> Add Custom Category
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-3 border-top">
+                    <span class="text-muted small">
+                        <i class="fa-solid fa-lock text-success me-1"></i> 100% private. Analyzed with deterministic math + Gemini AI.
+                    </span>
+                    <button type="submit" class="btn btn-primary btn-lg px-4 shadow" id="submitAnalyzeBtn">
+                        <span>Analyze Finances</span>
+                        <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Section (Dynamic DOM Rendering Container) -->
+    <div id="resultsSection" class="d-none mt-5">
+        <!-- Monthly Summary Report Card -->
+        <div class="card shadow-sm border-0 mb-4 rounded-4 bg-gradient">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 border-bottom pb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="bg-primary text-white p-2 rounded-3">
+                            <i class="fa-solid fa-chart-line fs-5"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-0 text-dark">Monthly Financial Health Report</h4>
+                            <small class="text-muted">Consolidated summary and savings rate calculation</small>
+                        </div>
+                    </div>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold">
+                        <i class="fa-solid fa-circle-check me-1"></i> Analysis Complete
+                    </span>
+                </div>
+
+                <!-- 4 Top Stat KPI Cards -->
+                <div class="row g-3 text-center mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <small class="text-muted d-block fw-semibold">Monthly Income</small>
+                            <h4 class="fw-bold text-success mb-0" id="summaryIncome">₹0</h4>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <small class="text-muted d-block fw-semibold">Total Expenses</small>
+                            <h4 class="fw-bold text-danger mb-0" id="summaryExpenses">₹0</h4>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <small class="text-muted d-block fw-semibold">Net Savings</small>
+                            <h4 class="fw-bold text-primary mb-0" id="summarySavings">₹0</h4>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 rounded-3 bg-light border">
+                            <small class="text-muted d-block fw-semibold">Savings Rate</small>
+                            <h4 class="fw-bold text-dark mb-0" id="summarySavingsRate">0%</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Summary Narrative -->
+                <div class="p-3 rounded-3 bg-primary bg-opacity-10 border border-primary border-opacity-25">
+                    <div class="d-flex align-items-center gap-2 mb-1 text-primary fw-bold small">
+                        <i class="fa-solid fa-robot"></i> AI Financial Summary
+                    </div>
+                    <p class="mb-0 text-dark" id="summaryText">
+                        Your financial overview is ready.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two-column Layout: Budget on Left, Analysis & Suggestions on Right -->
+        <div class="advisor-results-layout">
+            <!-- Left Column: Budget Cards -->
+            <div>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="fa-solid fa-chart-pie text-primary me-2"></i>Recommended Budget Allocations
+                    </h5>
+                    <span class="text-muted small">Actual vs Guideline</span>
+                </div>
+                <!-- Dynamic Budget Cards Container -->
+                <div class="budget-cards-container" id="budgetCardsContainer"></div>
+            </div>
+
+            <!-- Right Column: Spending Analysis Chips & Saving Suggestions -->
+            <div class="d-flex flex-direction-column flex-column gap-4">
+                <!-- Spending Analysis Chips -->
+                <div class="glass-card p-3 p-md-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                        <h5 class="fw-bold text-dark mb-0">
+                            <i class="fa-solid fa-magnifying-glass-chart text-info me-2"></i>Spending Analysis Chips
+                        </h5>
+                        <span class="badge bg-light text-secondary">Status Breakdown</span>
+                    </div>
+                    <!-- Dynamic Analysis Chips Container -->
+                    <div class="analysis-chips-container" id="analysisChipsContainer"></div>
+                </div>
+
+                <!-- Saving Suggestions List -->
+                <div class="card glass-card suggestions-card p-3 p-md-4">
+                    <div class="piggy-header mb-3 border-bottom pb-2">
+                        <i class="fa-solid fa-piggy-bank"></i>
+                        <span>Tailored Saving Suggestions</span>
+                    </div>
+                    <!-- Dynamic Suggestions List Container -->
+                    <ol class="suggestions-ordered-list" id="suggestionsListContainer"></ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Educational Disclaimer -->
+        <div class="alert alert-secondary mt-4 text-center small rounded-3 border-0 bg-light" role="alert">
+            <i class="fa-solid fa-circle-info me-1 text-muted"></i>
+            <strong>Educational Disclaimer:</strong> These AI-generated insights and budget calculations are for educational and self-budgeting purposes only and do not constitute certified legal, tax, or investment advice.
+        </div>
+    </div>
+
+    <!-- Supported Scenarios Informational Cards Section -->
+    <div class="mt-5 pt-4 border-top">
+        <div class="text-center mb-4">
+            <h3 class="fw-bold text-dark">Engineered for Real-World Scenarios</h3>
+            <p class="text-muted">Tested across standard user personas from students to household managers</p>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 p-3 shadow-sm border-top border-4 border-primary">
+                    <h6 class="fw-bold text-dark"><i class="fa-solid fa-briefcase text-primary me-2"></i>Salaried Pro</h6>
+                    <p class="small text-muted mb-2">Automates fixed rent/utilities, identifies dining out leaks, and targets a 20%+ savings cushion.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 p-3 shadow-sm border-top border-4 border-success">
+                    <h6 class="fw-bold text-dark"><i class="fa-solid fa-graduation-cap text-success me-2"></i>College Student</h6>
+                    <p class="small text-muted mb-2">Manages limited allowances, curbs impulse discretionary spends, and tracks goals like laptops.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 p-3 shadow-sm border-top border-4 border-info">
+                    <h6 class="fw-bold text-dark"><i class="fa-solid fa-laptop-code text-info me-2"></i>Freelancer</h6>
+                    <p class="small text-muted mb-2">Accommodates variable revenue streams and emphasizes maintaining a 3-6 month emergency runway.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 p-3 shadow-sm border-top border-4 border-warning">
+                    <h6 class="fw-bold text-dark"><i class="fa-solid fa-people-roof text-warning me-2"></i>Household</h6>
+                    <p class="small text-muted mb-2">Consolidates groceries, medical, and education costs to ensure family financial peace of mind.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

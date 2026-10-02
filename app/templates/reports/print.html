@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Financial Statement — {{ report.month_name }} {{ report.year }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { font-family: "Segoe UI", Arial, sans-serif; color: #1e293b; background: #fff; }
+        .statement-header { border-bottom: 2px solid #0f172a; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+        .table th { background-color: #f1f5f9; font-size: 0.8rem; text-transform: uppercase; }
+        .ai-markdown-content h3 { font-size: 1rem; font-weight: bold; margin-top: 1rem; }
+        @media print {
+            .no-print { display: none !important; }
+            body { font-size: 10pt; }
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="no-print mb-4 d-flex justify-content-between align-items-center bg-light p-3 rounded border">
+        <div>
+            <h5 class="mb-0 fw-bold">Print Preview Mode</h5>
+            <small class="text-muted">Use browser print to save as PDF or send directly to printer.</small>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-primary btn-sm fw-bold">
+                Print / Save PDF
+            </button>
+            <button onclick="window.close()" class="btn btn-outline-secondary btn-sm">
+                Close Preview
+            </button>
+        </div>
+    </div>
+
+    <!-- Printable Statement Header -->
+    <div class="statement-header d-flex justify-content-between align-items-start">
+        <div>
+            <h2 class="fw-bold mb-1">PERSONAL FINANCE ADVISOR</h2>
+            <h5 class="text-muted mb-0">MONTHLY FINANCIAL STATEMENT</h5>
+            <div class="small text-muted mt-2">
+                User: <strong>{{ current_user.name }}</strong> ({{ current_user.email }}) &bull; Persona: {{ current_user.user_type }}
+            </div>
+        </div>
+        <div class="text-end">
+            <h3 class="fw-bold text-primary mb-1">{{ report.month_name }} {{ report.year }}</h3>
+            <div class="small text-muted">Currency: INR (₹)</div>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="row g-2 mb-4 text-center">
+        <div class="col-3">
+            <div class="p-2 border rounded">
+                <small class="text-muted d-block">Total Inflow</small>
+                <strong class="fs-5 text-success">{{ report.total_income | currency }}</strong>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="p-2 border rounded">
+                <small class="text-muted d-block">Total Outflow</small>
+                <strong class="fs-5 text-danger">{{ report.total_expenses | currency }}</strong>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="p-2 border rounded">
+                <small class="text-muted d-block">Net Savings</small>
+                <strong class="fs-5 text-primary">{{ report.savings | currency }}</strong>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="p-2 border rounded">
+                <small class="text-muted d-block">Savings Rate</small>
+                <strong class="fs-5 text-dark">{{ report.savings_rate }}%</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side-by-side Tables -->
+    <div class="row g-3 mb-4">
+        <div class="col-6">
+            <h6 class="fw-bold border-bottom pb-1 mb-2">Income Sources</h6>
+            <table class="table table-sm table-bordered">
+                <thead><tr><th>Source</th><th class="text-end">Amount</th><th class="text-end">Share</th></tr></thead>
+                <tbody>
+                    {% for item in report.income_items %}
+                    <tr><td>{{ item.source }}</td><td class="text-end">{{ item.amount | currency }}</td><td class="text-end">{{ item.percentage }}%</td></tr>
+                    {% endfor %}
+                    <tr class="fw-bold"><td>Total</td><td class="text-end">{{ report.total_income | currency }}</td><td class="text-end">100%</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-6">
+            <h6 class="fw-bold border-bottom pb-1 mb-2">Expense Outflows</h6>
+            <table class="table table-sm table-bordered">
+                <thead><tr><th>Category</th><th class="text-end">Amount</th><th class="text-end">Share</th></tr></thead>
+                <tbody>
+                    {% for item in report.expense_items %}
+                    <tr><td>{{ item.category }}</td><td class="text-end">{{ item.amount | currency }}</td><td class="text-end">{{ item.percentage }}%</td></tr>
+                    {% endfor %}
+                    <tr class="fw-bold"><td>Total</td><td class="text-end">{{ report.total_expenses | currency }}</td><td class="text-end">100%</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Budget Performance -->
+    <h6 class="fw-bold border-bottom pb-1 mb-2">Budget Variance Performance</h6>
+    <table class="table table-sm table-bordered mb-4">
+        <thead>
+            <tr><th>Category</th><th class="text-end">Budget Cap</th><th class="text-end">Actual Spent</th><th class="text-end">Variance</th><th class="text-center">Status</th></tr>
+        </thead>
+        <tbody>
+            {% for b in report.budget_data.budget_items %}
+            <tr>
+                <td>{{ b.category }}</td>
+                <td class="text-end">{{ b.budgeted | currency }}</td>
+                <td class="text-end">{{ b.spent | currency }}</td>
+                <td class="text-end">{{ b.remaining | currency }}</td>
+                <td class="text-center">{{ b.status_label }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- AI Advisor Summary -->
+    <h6 class="fw-bold border-bottom pb-1 mb-2">AI Advisor Narrative Summary</h6>
+    <div class="p-3 border rounded bg-light mb-4">
+        <div id="print-ai-raw" style="display: none;">{{ ai_summary.content }}</div>
+        <div id="print-ai-rendered" class="ai-markdown-content small"></div>
+    </div>
+
+    <div class="text-center text-muted small border-top pt-2">
+        Statement generated on Personal Finance Advisor Bot &bull; Calculations validated strictly via Python &bull; Educational demonstration
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const raw = document.getElementById("print-ai-raw");
+            const target = document.getElementById("print-ai-rendered");
+            if (raw && target) {
+                target.innerHTML = marked.parse(raw.textContent);
+            }
+        });
+    </script>
+</body>
+</html>

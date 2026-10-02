@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}404 - Page Not Found — Personal Finance Advisor{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5 text-center">
+    <div class="col-md-6">
+        <div class="p-5 bg-white rounded-4 shadow-sm border">
+            <div class="display-1 fw-bold text-primary mb-3">404</div>
+            <h3 class="fw-bold text-dark mb-2">Page Not Found</h3>
+            <p class="text-muted mb-4">
+                The financial record or page you are looking for does not exist or may have been moved.
+            </p>
+            <div class="d-flex justify-content-center gap-2">
+                <a href="{{ url_for('dashboard.dashboard') if current_user.is_authenticated else url_for('auth.index') }}"
+                   class="btn btn-primary px-4 fw-bold">
+                    <i class="bi bi-house-door me-1"></i> Return to Safe Ground
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

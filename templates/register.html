@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account — Personal Finance Advisor{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-7 col-lg-6">
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle p-3 mb-2">
+                        <i class="bi bi-person-plus fs-3"></i>
+                    </div>
+                    <h3 class="fw-bold text-dark">Create Account</h3>
+                    <p class="text-muted small">Select your persona to configure tailored budgeting heuristics</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.register') }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold small text-muted">Full Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control border-start-0" id="name" name="name"
+                                   placeholder="e.g. Pranjal Sharma" value="{{ name or '' }}" required autofocus>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold small text-muted">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope"></i></span>
+                            <input type="email" class="form-control border-start-0" id="email" name="email"
+                                   placeholder="name@example.com" value="{{ email or '' }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="user_type" class="form-label fw-semibold small text-muted">Financial Situation / Persona</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-person-badge"></i></span>
+                            <select class="form-select border-start-0" id="user_type" name="user_type" required>
+                                {% for utype in user_types %}
+                                <option value="{{ utype }}" {% if selected_type == utype %}selected{% endif %}>
+                                    {{ utype }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-text small text-muted">
+                            Customizes AI advisory tone and budget distribution heuristics to match your income stability.
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label fw-semibold small text-muted">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control border-start-0" id="password" name="password"
+                                       placeholder="Min 6 characters" required>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <label for="confirm_password" class="form-label fw-semibold small text-muted">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock-fill"></i></span>
+                                <input type="password" class="form-control border-start-0" id="confirm_password" name="confirm_password"
+                                       placeholder="Repeat password" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm mb-3">
+                        <i class="bi bi-check-circle me-1"></i> Register Free
+                    </button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <p class="text-muted small mb-0">
+                        Already have an account?
+                        <a href="{{ url_for('auth.login') }}" class="text-primary fw-bold text-decoration-none">Sign in here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
